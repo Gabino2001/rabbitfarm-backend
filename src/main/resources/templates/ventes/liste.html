@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Ventes</title></head>
+<body>
+<section th:fragment="content" th:with="activePage='ventes'">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title mb-0">💰 Ventes & Revenus</h1>
+        <a th:href="@{/ventes/nouveau}" class="btn btn-sage">
+            <i class="bi bi-plus-lg me-1"></i> Enregistrer une vente
+        </a>
+    </div>
+
+    <!-- Banner revenus -->
+    <div class="revenue-banner mb-4">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="small opacity-75 mb-1">REVENUS TOTAUX</div>
+                <div class="amount" th:text="${#numbers.formatInteger(revenusTotaux, 1, 'COMMA')} + ' FCFA'">0 FCFA</div>
+            </div>
+            <div class="col-md-4 border-start border-end" style="border-color:rgba(255,255,255,0.2)!important;">
+                <div class="small opacity-75 mb-1">CE MOIS-CI</div>
+                <div class="amount" th:text="${#numbers.formatInteger(revenusMois, 1, 'COMMA')} + ' FCFA'">0 FCFA</div>
+            </div>
+            <div class="col-md-4">
+                <div class="small opacity-75 mb-1">POIDS VENDU CE MOIS</div>
+                <div class="amount" th:text="${#numbers.formatDecimal(poidsMois, 1, 1)} + ' kg'">0 kg</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table ventes -->
+    <div class="card-rabbitfarm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            Historique des ventes
+            <span class="badge bg-secondary" th:text="${#lists.size(ventes)} + ' ventes'"></span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-rabbitfarm mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Client</th>
+                        <th>Type</th>
+                        <th>Nb têtes</th>
+                        <th>Poids (kg)</th>
+                        <th>Prix/kg</th>
+                        <th>Total (FCFA)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="vente : ${ventes}">
+                        <td class="fw-bold" style="color:#C8A96E;" th:text="${vente.id}"></td>
+                        <td th:text="${#temporals.format(vente.dateVente, 'dd/MM/yyyy')}"></td>
+                        <td class="fw-semibold" th:text="${vente.client}"></td>
+                        <td>
+                            <span class="badge bg-secondary" th:text="${vente.type}"></span>
+                        </td>
+                        <td th:text="${vente.nombreTetes != null ? vente.nombreTetes : '—'}"></td>
+                        <td th:text="${vente.poidsKg}"></td>
+                        <td class="text-muted"
+                            th:text="${#numbers.formatDecimal(vente.prixParKg, 1, 0)} + ' F'"></td>
+                        <td class="fw-bold" style="color:#7A9E7E;"
+                            th:text="${#numbers.formatInteger(vente.prixTotal, 1, 'COMMA')} + ' F'"></td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a th:href="@{/ventes/{id}/modifier(id=${vente.id})}"
+                                   class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i></a>
+                                <form th:action="@{/ventes/{id}/supprimer(id=${vente.id})}"
+                                      method="post" data-confirm="Supprimer cette vente ?">
+                                    <button class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(ventes)}">
+                        <td colspan="9" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            Aucune vente enregistrée.
+                            <a th:href="@{/ventes/nouveau}">Enregistrer la première</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

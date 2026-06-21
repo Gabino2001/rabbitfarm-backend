@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title th:text="${portee.id != null} ? 'Modifier portée' : 'Nouvelle portée'">Portée</title></head>
+<body>
+<section th:fragment="content" th:with="activePage='portees'">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a th:href="@{/portees}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="page-title mb-0"
+            th:text="${depuisGestation} ? '🍼 Enregistrer la mise bas' : (${portee.id != null} ? '✏️ Modifier portée' : '➕ Nouvelle portée')"></h1>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card-rabbitfarm p-4">
+
+                <!-- Bandeau "issu d'une gestation suivie" -->
+                <div th:if="${depuisGestation}" class="alert alert-success py-2 px-3 mb-4 small">
+                    <i class="bi bi-check2-circle me-2"></i>
+                    Cette portée est liée à une gestation suivie.
+                    La lapine et la date sont pré-remplies — il ne reste qu'à indiquer le nombre de nés.
+                </div>
+
+                <form th:action="${portee.id != null} ? @{/portees/{id}/modifier(id=${portee.id})} : @{/portees/nouveau}"
+                      th:object="${portee}" method="post">
+
+                    <!-- Champ caché pour conserver le lien vers la gestation -->
+                    <input type="hidden" th:if="${portee.gestation != null}" th:field="*{gestation.id}"/>
+
+                    <div class="form-section-title">Informations de la portée</div>
+                    <div class="row g-3">
+
+                        <div class="col-12">
+                            <label class="form-label">Lapine *</label>
+                            <select class="form-select" th:field="*{lapine.id}"
+                                    th:disabled="${depuisGestation}"
+                                    th:classappend="${#fields.hasErrors('lapine')} ? 'is-invalid' : ''">
+                                <option value="">-- Sélectionner une lapine --</option>
+                                <option th:each="l : ${lapines}"
+                                        th:value="${l.id}"
+                                        th:text="${l.nom} + ' (' + ${l.race} + ')'"></option>
+                            </select>
+                            <!-- Champ caché pour soumettre la valeur même si select désactivé -->
+                            <input th:if="${depuisGestation}" type="hidden"
+                                   th:name="lapine.id" th:value="${portee.lapine.id}"/>
+                            <div class="invalid-feedback" th:errors="*{lapine}"></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Date de mise bas *</label>
+                            <input type="date" class="form-control" th:field="*{dateMiseBas}"
+                                   th:classappend="${#fields.hasErrors('dateMiseBas')} ? 'is-invalid' : ''"/>
+                            <div class="invalid-feedback" th:errors="*{dateMiseBas}"></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Date de sevrage prévue</label>
+                            <input type="date" class="form-control" th:field="*{dateSevrage}"/>
+                            <div class="form-text">Laissez vide pour calculer auto (45 jours)</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Nombre nés *</label>
+                            <input type="number" min="0" class="form-control" th:field="*{nbNes}"
+                                   th:classappend="${#fields.hasErrors('nbNes')} ? 'is-invalid' : ''"
+                                   autofocus/>
+                            <div class="invalid-feedback" th:errors="*{nbNes}"></div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Décès</label>
+                            <input type="number" min="0" class="form-control" th:field="*{nbDeces}" value="0"/>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Statut</label>
+                            <select class="form-select" th:field="*{statut}">
+                                <option th:each="s : ${statuts}" th:value="${s}" th:text="${s}"></option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" th:field="*{notes}" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a th:href="@{/portees}" class="btn btn-outline-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-sage">
+                            <i class="bi bi-check-lg me-1"></i>
+                            <span th:text="${depuisGestation} ? 'Enregistrer la mise bas' : (${portee.id != null} ? 'Enregistrer' : 'Créer')"></span>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

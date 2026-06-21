@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Engraissement</title></head>
+<body>
+<section th:fragment="content" th:with="activePage='engraissement'">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title mb-0">🥩 Lots en engraissement</h1>
+        <a th:href="@{/engraissement/nouveau}" class="btn btn-sage">
+            <i class="bi bi-plus-lg me-1"></i> Nouveau lot manuel
+        </a>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card" style="border-top-color:#C8A96E;">
+                <div class="stat-value" th:text="${totalEnEngraissement}">0</div>
+                <div class="stat-label">Lapereaux en engraissement</div>
+                <div class="stat-sub">Tous lots en cours confondus</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card" style="border-top-color:#7A9E7E;">
+                <div class="stat-value" th:text="${#lists.size(lotsEnCours)}">0</div>
+                <div class="stat-label">Lots actifs</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card" style="border-top-color:#3B2A1A;">
+                <div class="stat-value" th:text="${#lists.size(tousLesLots)}">0</div>
+                <div class="stat-label">Total lots (historique)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lots en cours -->
+    <div class="card-rabbitfarm mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            🟢 Lots en cours
+            <span class="badge bg-secondary" th:text="${#lists.size(lotsEnCours)} + ' lots'"></span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-rabbitfarm mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Origine</th>
+                        <th>Date entrée</th>
+                        <th>Initial</th>
+                        <th>Actuel</th>
+                        <th>Décès</th>
+                        <th>Cage</th>
+                        <th>Poids estimé</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="lot : ${lotsEnCours}">
+                        <td class="fw-bold" style="color:#C8A96E;" th:text="'#' + ${lot.id}"></td>
+
+                        <!-- Origine : portée ou manuel -->
+                        <td>
+                            <div th:if="${lot.portee != null}">
+                                <span class="fw-semibold" th:text="${lot.portee.lapine.nom}"></span>
+                                <br/>
+                                <small class="text-muted" th:text="'Portée #' + ${lot.portee.id}"></small>
+                            </div>
+                            <div th:if="${lot.portee == null}">
+                                <span class="fw-semibold text-muted">Lot manuel</span>
+                                <br/>
+                                <small class="text-muted" th:text="${lot.notes}"></small>
+                            </div>
+                        </td>
+
+                        <td th:text="${#temporals.format(lot.dateEntree, 'dd/MM/yyyy')}"></td>
+                        <td class="text-center fw-bold" th:text="${lot.nombreInitial}"></td>
+                        <td class="text-center fw-bold text-success fs-5" th:text="${lot.nombreActuel}"></td>
+                        <td class="text-center text-danger"
+                            th:text="${lot.nombreDeces > 0 ? lot.nombreDeces : '—'}"></td>
+                        <td th:text="${lot.cage != null ? lot.cage.numero : '—'}"></td>
+                        <td th:text="${#numbers.formatDecimal(lot.poidsEstimeKg, 1, 1)} + ' kg'"></td>
+
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+
+                                <!-- AJOUTER DES LAPEREAUX -->
+                                <button class="btn btn-sm btn-outline-success"
+                                        data-bs-toggle="modal"
+                                        th:data-bs-target="'#modalAjouter' + ${lot.id}"
+                                        title="Ajouter des lapereaux">
+                                    <i class="bi bi-plus-circle"></i> Ajouter
+                                </button>
+
+                                <!-- DÉCLARER UN DÉCÈS -->
+                                <button class="btn btn-sm btn-outline-danger"
+                                        data-bs-toggle="modal"
+                                        th:data-bs-target="'#modalDeces' + ${lot.id}"
+                                        title="Enregistrer un décès">
+                                    <i class="bi bi-dash-circle"></i> Décès
+                                </button>
+
+                                <!-- CLÔTURER VENDU -->
+                                <form th:action="@{/engraissement/{id}/cloturer(id=${lot.id})}"
+                                      method="post">
+                                    <input type="hidden" name="statut" value="VENDU"/>
+                                    <button type="submit" class="btn btn-sm btn-sage"
+                                            onclick="return confirm('Marquer ce lot comme vendu ?')">
+                                        <i class="bi bi-check2-circle"></i> Vendu
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(lotsEnCours)}">
+                        <td colspan="9" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            Aucun lot en engraissement.<br/>
+                            <small>Les lapereaux y arrivent automatiquement au sevrage, ou via
+                                <a th:href="@{/engraissement/nouveau}">un lot manuel</a>.
+                            </small>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Historique -->
+    <div class="card-rabbitfarm">
+        <div class="card-header">📋 Historique de tous les lots</div>
+        <div class="table-responsive">
+            <table class="table table-rabbitfarm mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Origine</th>
+                        <th>Date entrée</th>
+                        <th>Date sortie</th>
+                        <th>Initial</th>
+                        <th>Final</th>
+                        <th>Décès</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="lot : ${tousLesLots}">
+                        <td class="fw-bold" style="color:#C8A96E;" th:text="'#' + ${lot.id}"></td>
+                        <td>
+                            <span th:if="${lot.portee != null}"
+                                  th:text="${lot.portee.lapine.nom} + ' (Portée #' + ${lot.portee.id} + ')'"></span>
+                            <span th:if="${lot.portee == null}" class="text-muted">Lot manuel</span>
+                        </td>
+                        <td th:text="${#temporals.format(lot.dateEntree, 'dd/MM/yyyy')}"></td>
+                        <td th:text="${lot.dateSortie != null ? #temporals.format(lot.dateSortie, 'dd/MM/yyyy') : '—'}"></td>
+                        <td class="text-center" th:text="${lot.nombreInitial}"></td>
+                        <td class="text-center" th:text="${lot.nombreActuel}"></td>
+                        <td class="text-center text-danger" th:text="${lot.nombreDeces}"></td>
+                        <td>
+                            <span th:class="'badge ' + (${lot.statut.name() == 'EN_COURS'} ? 'badge-active' : 'bg-secondary text-white')"
+                                  th:text="${lot.statut}"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ============================
+         MODALS AJOUTER LAPEREAUX
+         ============================ -->
+    <div th:each="lot : ${lotsEnCours}">
+
+        <!-- Modal Ajouter -->
+        <div class="modal fade" th:id="'modalAjouter' + ${lot.id}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header" style="background:#3B2A1A;">
+                        <h5 class="modal-title text-white">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Ajouter des lapereaux — Lot #<span th:text="${lot.id}"></span>
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="@{/engraissement/{id}/ajouter(id=${lot.id})}" method="post">
+                        <div class="modal-body">
+                            <div class="alert alert-light border small mb-3">
+                                Lot actuel :
+                                <strong th:text="${lot.nombreActuel}"></strong> lapereaux
+                                <span th:if="${lot.portee != null}"
+                                      th:text="'— ' + ${lot.portee.lapine.nom}"></span>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Nombre à ajouter *</label>
+                                <input type="number" name="nombre" class="form-control"
+                                       min="1" required placeholder="Ex: 5"/>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Motif (optionnel)</label>
+                                <input type="text" name="motif" class="form-control"
+                                       placeholder="Ex: Achat extérieur, transfert lot #2..."/>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                    data-bs-dismiss="modal">Annuler</button>
+                            <button type="submit" class="btn btn-success btn-sm">
+                                <i class="bi bi-plus-lg me-1"></i> Ajouter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Décès -->
+        <div class="modal fade" th:id="'modalDeces' + ${lot.id}" tabindex="-1">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Enregistrer un décès</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="@{/engraissement/{id}/deces(id=${lot.id})}" method="post">
+                        <div class="modal-body">
+                            <p class="text-muted small mb-3">
+                                <strong th:text="${lot.nombreActuel}"></strong> lapereaux dans ce lot.
+                            </p>
+                            <label class="form-label fw-semibold">Nombre de décès *</label>
+                            <input type="number" name="nombreDeces" class="form-control"
+                                   min="1" th:max="${lot.nombreActuel}" required/>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                    data-bs-dismiss="modal">Annuler</button>
+                            <button type="submit" class="btn btn-danger btn-sm">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</section>
+</body>
+</html>

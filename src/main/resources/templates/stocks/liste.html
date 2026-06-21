@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Stocks</title></head>
+<body>
+<section th:fragment="content" th:with="activePage='stocks'">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title mb-0">🌾 Alimentation & Stocks</h1>
+        <a th:href="@{/stocks/nouveau}" class="btn btn-sage">
+            <i class="bi bi-plus-lg me-1"></i> Ajouter un stock
+        </a>
+    </div>
+
+    <!-- Alertes critiques -->
+    <div th:if="${!#lists.isEmpty(stocksCritiques)}" class="alert alert-danger mb-4">
+        <i class="bi bi-exclamation-octagon-fill me-2"></i>
+        <strong th:text="${#lists.size(stocksCritiques)} + ' stock(s) en niveau critique !'"></strong>
+        Réapprovisionnez dès que possible.
+    </div>
+
+    <!-- Cards stock -->
+    <div class="row g-3">
+        <div th:each="stock : ${stocks}" class="col-md-6">
+            <div class="card-rabbitfarm p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h6 class="fw-bold mb-0" style="color:#3B2A1A;" th:text="${stock.aliment}"></h6>
+                        <small class="text-muted" th:if="${stock.fournisseur}"
+                               th:text="'Fournisseur : ' + ${stock.fournisseur}"></small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold fs-5"
+                              th:text="${stock.quantite} + ' ' + ${stock.unite}"
+                              th:style="'color:' + (${stock.statut.name() == 'CRITIQUE'} ? '#C62828' : (${stock.statut.name() == 'BAS'} ? '#E65100' : '#388E3C'))">
+                        </span>
+                        <span th:class="'badge px-2 badge-' + ${stock.statut.name().toLowerCase()}"
+                              th:text="${stock.statut}"></span>
+                    </div>
+                </div>
+
+                <!-- Barre de progression -->
+                <div class="progress-bar"
+                     th:classappend="${stock.statut.name() == 'CRITIQUE'} ? 'bg-danger' : (${stock.statut.name() == 'BAS'} ? 'bg-warning' : 'bg-success')"
+                     th:style="'width:' + ${T(java.lang.Math).min(100.0, stock.quantite / (stock.seuilAlerte * 3) * 100)} + '%'">
+                </div>
+                <small class="text-muted" th:text="'Seuil d\'alerte : ' + ${stock.seuilAlerte} + ' ' + ${stock.unite}"></small>
+
+                <!-- Actions -->
+                <div class="d-flex gap-2 mt-3 pt-3 border-top">
+                    <!-- Ajouter quantité -->
+                    <form th:action="@{/stocks/{id}/ajouter(id=${stock.id})}" method="post"
+                          class="d-flex gap-1 flex-fill">
+                        <input type="number" name="quantite" step="0.1" min="0.1"
+                               class="form-control form-control-sm" placeholder="Quantité"/>
+                        <button type="submit" class="btn btn-sm btn-sage">
+                            <i class="bi bi-plus"></i> Ajouter
+                        </button>
+                    </form>
+                    <a th:href="@{/stocks/{id}/modifier(id=${stock.id})}"
+                       class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i></a>
+                    <form th:action="@{/stocks/{id}/supprimer(id=${stock.id})}"
+                          method="post" data-confirm="Supprimer ce stock ?">
+                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(stocks)}" class="col-12 text-center text-muted py-5">
+            <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+            Aucun stock enregistré.
+            <a th:href="@{/stocks/nouveau}">Ajouter le premier</a>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

@@ -1,0 +1,10 @@
+target/ 
+.idea/
+*.iml
+.vscode/
+*.log
+# fichiers sensibles
+application-local.propertie
+
+
+

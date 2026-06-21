@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title th:text="${cage.id != null} ? 'Modifier cage' : 'Nouvelle cage'">Cage</title></head>
+<body>
+<section th:fragment="content" th:with="activePage='cages'">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a th:href="@{/cages}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="page-title mb-0"
+            th:text="${cage.id != null} ? '✏️ Modifier cage' : '➕ Nouvelle cage'"></h1>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card-rabbitfarm p-4">
+                <form th:action="${cage.id != null} ? @{/cages/{id}/modifier(id=${cage.id})} : @{/cages/nouveau}"
+                      th:object="${cage}" method="post">
+
+                    <div class="form-section-title">Informations de la cage</div>
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label">Numéro *</label>
+                            <input type="text" class="form-control" th:field="*{numero}"
+                                   th:classappend="${#fields.hasErrors('numero')} ? 'is-invalid' : ''"
+                                   placeholder="Ex: C-01"/>
+                            <div class="invalid-feedback" th:errors="*{numero}"></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Capacité max</label>
+                            <input type="number" min="1" class="form-control" th:field="*{capaciteMax}"
+                                   placeholder="Ex: 6"/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Type *</label>
+                            <select class="form-select" th:field="*{type}">
+                                <option value="">-- Choisir --</option>
+                                <option th:each="t : ${types}" th:value="${t}" th:text="${t}"></option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Statut</label>
+                            <select class="form-select" th:field="*{statut}">
+                                <option th:each="s : ${statuts}" th:value="${s}" th:text="${s}"></option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Localisation</label>
+                            <input type="text" class="form-control" th:field="*{localisation}"
+                                   placeholder="Ex: Bâtiment A - Rangée 2"/>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" th:field="*{notes}" rows="3"
+                                      placeholder="Observations..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a th:href="@{/cages}" class="btn btn-outline-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-sage">
+                            <i class="bi bi-check-lg me-1"></i>
+                            <span th:text="${cage.id != null} ? 'Enregistrer' : 'Créer'"></span>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

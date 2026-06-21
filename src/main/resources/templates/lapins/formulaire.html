@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title th:text="${lapin.id != null} ? 'Modifier lapin' : 'Nouveau lapin'">Lapin</title></head>
+<body>
+<section th:fragment="content" th:with="activePage='lapins'">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a th:href="@{/lapins}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="page-title mb-0"
+            th:text="${lapin.id != null} ? '✏️ Modifier lapin' : '➕ Nouveau lapin'"></h1>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card-rabbitfarm p-4">
+
+                <form th:action="${lapin.id != null} ? @{/lapins/{id}/modifier(id=${lapin.id})} : @{/lapins/nouveau}"
+                      th:object="${lapin}" method="post">
+
+                    <div class="form-section-title">Informations générales</div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Nom *</label>
+                            <input type="text" class="form-control" th:field="*{nom}"
+                                   th:classappend="${#fields.hasErrors('nom')} ? 'is-invalid' : ''"
+                                   placeholder="Ex: Blanche"/>
+                            <div class="invalid-feedback" th:errors="*{nom}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Race *</label>
+                            <input type="text" class="form-control" th:field="*{race}"
+                                   th:classappend="${#fields.hasErrors('race')} ? 'is-invalid' : ''"
+                                   placeholder="Ex: Néo-Zélandais"/>
+                            <div class="invalid-feedback" th:errors="*{race}"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Sexe *</label>
+                            <select class="form-select" th:field="*{sexe}"
+                                    th:classappend="${#fields.hasErrors('sexe')} ? 'is-invalid' : ''">
+                                <option value="">-- Choisir --</option>
+                                <option th:each="s : ${sexes}" th:value="${s}" th:text="${s}"></option>
+                            </select>
+                            <div class="invalid-feedback" th:errors="*{sexe}"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Type *</label>
+                            <select class="form-select" th:field="*{type}">
+                                <option th:each="t : ${types}" th:value="${t}" th:text="${t}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Statut</label>
+                            <select class="form-select" th:field="*{statut}">
+                                <option th:each="s : ${statuts}" th:value="${s}" th:text="${s}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Date de naissance *</label>
+                            <input type="date" class="form-control" th:field="*{dateNaissance}"
+                                   th:classappend="${#fields.hasErrors('dateNaissance')} ? 'is-invalid' : ''"/>
+                            <div class="invalid-feedback" th:errors="*{dateNaissance}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Poids (kg)</label>
+                            <input type="number" step="0.1" class="form-control" th:field="*{poidKg}"
+                                   placeholder="Ex: 2.5"/>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">Cage</label>
+                            <select class="form-select" th:field="*{cage.id}">
+                                <option value="">-- Aucune cage --</option>
+                                <option th:each="c : ${cages}"
+                                        th:value="${c.id}"
+                                        th:text="${c.numero} + ' (' + ${c.type} + ')'"></option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" th:field="*{notes}" rows="3"
+                                      placeholder="Observations, remarques..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a th:href="@{/lapins}" class="btn btn-outline-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-sage">
+                            <i class="bi bi-check-lg me-1"></i>
+                            <span th:text="${lapin.id != null} ? 'Enregistrer' : 'Créer'"></span>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

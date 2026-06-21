@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Nouveau lot d'engraissement</title></head>
+<body>
+<section th:fragment="content" th:with="activePage='engraissement'">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a th:href="@{/engraissement}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="page-title mb-0">➕ Nouveau lot manuel</h1>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card-rabbitfarm p-4">
+
+                <!-- Info -->
+                <div class="alert alert-info py-2 px-3 mb-4 small">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Utilisez ce formulaire pour ajouter des lapereaux <strong>non issus d'une portée</strong>
+                    (achat extérieur, transfert d'une autre ferme, etc.).<br/>
+                    Les portées sevrées créent leur lot automatiquement.
+                </div>
+
+                <form th:action="@{/engraissement/nouveau}" method="post">
+
+                    <div class="form-section-title">Informations du lot</div>
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre de lapereaux *</label>
+                            <input type="number" name="nombreLapereaux" class="form-control"
+                                   min="1" required placeholder="Ex: 10"/>
+                            <div class="form-text">Nombre total à enregistrer dans ce lot</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Cage d'engraissement</label>
+                            <select name="cageId" class="form-select">
+                                <option value="">-- Auto (première libre) --</option>
+                                <option th:each="c : ${cages}"
+                                        th:value="${c.id}"
+                                        th:text="${c.numero} + ' — ' + ${c.type} + ' (' + ${c.statut} + ')'">
+                                </option>
+                            </select>
+                            <div class="form-text">Laissez vide pour assigner automatiquement</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Notes / Origine</label>
+                            <textarea name="notes" class="form-control" rows="3"
+                                      placeholder="Ex: Achat auprès de M. Diallo — marché de Thiès"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a th:href="@{/engraissement}" class="btn btn-outline-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-sage">
+                            <i class="bi bi-plus-lg me-1"></i> Créer le lot
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

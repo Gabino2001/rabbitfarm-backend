@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Cages</title></head>
+<body>
+<section th:fragment="content" th:with="activePage='cages'">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title mb-0">🏚️ Gestion des cages</h1>
+        <a th:href="@{/cages/nouveau}" class="btn btn-sage">
+            <i class="bi bi-plus-lg me-1"></i> Ajouter une cage
+        </a>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6">
+            <div class="stat-card" style="border-top-color:#3B2A1A;">
+                <div class="stat-value" th:text="${totalCages}">0</div>
+                <div class="stat-label">Total cages</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="stat-card" style="border-top-color:#388E3C;">
+                <div class="stat-value" th:text="${cagesLibres}">0</div>
+                <div class="stat-label">Cages libres</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grille des cages -->
+    <div class="row g-3">
+        <div th:each="cage : ${cages}" class="col-sm-6 col-md-4 col-lg-3">
+            <div th:class="'cage-card h-100 ' + (${cage.statut.name() == 'LIBRE'} ? 'libre' : '')">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold fs-5" style="color:#3B2A1A;" th:text="${cage.numero}"></span>
+                    <span th:class="'badge px-2 badge-' + ${cage.statut.name().toLowerCase()}"
+                          th:text="${cage.statut}"></span>
+                </div>
+                <div class="small text-muted mb-1">
+                    <i class="bi bi-tag me-1"></i>
+                    <span th:text="${cage.type}"></span>
+                </div>
+                <div th:if="${cage.localisation}" class="small text-muted mb-1">
+                    <i class="bi bi-geo-alt me-1"></i>
+                    <span th:text="${cage.localisation}"></span>
+                </div>
+                <div class="small mb-2">
+                    <i class="bi bi-people me-1"></i>
+                    <span th:text="${cage.nombreOccupants} + ' / ' + (${cage.capaciteMax != null ? cage.capaciteMax : '—'})"></span>
+                </div>
+                <div th:if="${cage.notes}" class="small text-muted fst-italic mb-2"
+                     th:text="${cage.notes}"></div>
+                <div class="d-flex gap-1 mt-auto pt-2 border-top">
+                    <a th:href="@{/cages/{id}/modifier(id=${cage.id})}"
+                       class="btn btn-sm btn-outline-warning flex-fill">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <form th:action="@{/cages/{id}/supprimer(id=${cage.id})}"
+                          method="post" data-confirm="Supprimer cette cage ?">
+                        <button class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(cages)}" class="col-12 text-center text-muted py-5">
+            <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+            Aucune cage enregistrée.
+            <a th:href="@{/cages/nouveau}">Ajouter la première</a>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Tableau de bord</title></head>
+<body>
+<section th:fragment="content">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="page-title mb-1">🏠 Tableau de bord</h1>
+            <p class="text-muted small mb-0" th:text="${#temporals.format(#temporals.createNow(), 'EEEE dd MMMM yyyy')}"></p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="stat-card" style="border-top-color:#3B2A1A;">
+                <div class="stat-value" th:text="${totalLapins}">0</div>
+                <div class="stat-label">Total lapins</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="stat-card" style="border-top-color:#C8A96E;">
+                <div class="stat-value" th:text="${malesReproducteurs}">0</div>
+                <div class="stat-label">Mâles reprod.</div>
+                <div class="stat-sub">Reproducteurs</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="stat-card" style="border-top-color:#7A9E7E;">
+                <div class="stat-value" th:text="${femellesReproductrices}">0</div>
+                <div class="stat-label">Femelles</div>
+                <div class="stat-sub">Reproductrices</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="stat-card" style="border-top-color:#C8A96E;">
+                <div class="stat-value" th:text="${lapinsEngraissement}">0</div>
+                <div class="stat-label">Engraissement</div>
+                <div class="stat-sub">En cours</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="stat-card" style="border-top-color:#8C7B6B;">
+                <div class="stat-value" th:text="${totalCages}">0</div>
+                <div class="stat-label">Cages</div>
+                <div class="stat-sub" th:text="${cagesLibres} + ' libres'"></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="stat-card" style="border-top-color:#D94F3D;">
+                <div class="stat-value" th:text="${nbAlertes}">0</div>
+                <div class="stat-label">Alertes stock</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Alertes -->
+        <div class="col-md-6">
+            <div class="card-rabbitfarm h-100">
+                <div class="card-header">🚨 Alertes</div>
+                <div class="p-3">
+                    <!-- Stocks critiques -->
+                    <div th:each="s : ${stocksCritiques}"
+                         class="alert alert-danger py-2 px-3 mb-2 d-flex align-items-center">
+                        <i class="bi bi-exclamation-octagon-fill me-2"></i>
+                        Stock critique : <strong class="ms-1" th:text="${s.aliment}"></strong>
+                        &nbsp;(<span th:text="${s.quantite}"></span> <span th:text="${s.unite}"></span>)
+                    </div>
+                    <!-- Sevrages à venir -->
+                    <div th:each="p : ${sevragesAVenir}"
+                         class="alert alert-warning py-2 px-3 mb-2 d-flex align-items-center">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        Sevrage prévu : portée de <strong class="ms-1" th:text="${p.lapine.nom}"></strong>
+                        le <span th:text="${#temporals.format(p.dateSevrage, 'dd/MM/yyyy')}"></span>
+                    </div>
+                    <p th:if="${#lists.isEmpty(stocksCritiques) and #lists.isEmpty(sevragesAVenir)}"
+                       class="text-muted text-center py-3 mb-0">
+                        <i class="bi bi-check-circle-fill text-success me-1"></i> Aucune alerte
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Résumé du mois -->
+        <div class="col-md-6">
+            <div class="card-rabbitfarm h-100">
+                <div class="card-header">📊 Ce mois-ci</div>
+                <div class="p-3">
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Lapereaux nés</span>
+                        <strong th:text="${nesduMois}">0</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Décès portées</span>
+                        <strong class="text-danger" th:text="${totalDeces}">0</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Poids vendu</span>
+                        <strong th:text="${#numbers.formatDecimal(poidsMois, 1, 1)} + ' kg'">0 kg</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted">Revenus</span>
+                        <strong class="text-success"
+                                th:text="${#numbers.formatInteger(revenusMois, 1, 'COMMA')} + ' FCFA'">0 FCFA</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

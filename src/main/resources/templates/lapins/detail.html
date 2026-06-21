@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title th:text="'Lapin - ' + ${lapin.nom}">Détail lapin</title></head>
+<body>
+<section th:fragment="content" th:with="activePage='lapins'">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a th:href="@{/lapins}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="page-title mb-0" th:text="'🐇 ' + ${lapin.nom}"></h1>
+        <a th:href="@{/lapins/{id}/modifier(id=${lapin.id})}" class="btn btn-sm btn-outline-warning ms-auto">
+            <i class="bi bi-pencil me-1"></i> Modifier
+        </a>
+    </div>
+
+    <div class="row g-3">
+
+        <!-- Infos principales -->
+        <div class="col-md-5">
+            <div class="card-rabbitfarm p-4 h-100">
+                <div class="form-section-title">Fiche lapin</div>
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td class="text-muted fw-semibold" style="width:40%;">ID</td>
+                        <td th:text="${lapin.id}"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold">Race</td>
+                        <td th:text="${lapin.race}"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold">Sexe</td>
+                        <td>
+                            <span th:if="${lapin.sexe.name() == 'MALE'}" class="badge bg-primary">♂ Mâle</span>
+                            <span th:if="${lapin.sexe.name() == 'FEMELLE'}" class="badge" style="background:#7B1FA2;">♀ Femelle</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold">Type</td>
+                        <td th:text="${lapin.type}"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold">Naissance</td>
+                        <td th:text="${#temporals.format(lapin.dateNaissance, 'dd/MM/yyyy')}"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold">Poids</td>
+                        <td th:text="${lapin.poidKg != null ? lapin.poidKg + ' kg' : '—'}"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold">Cage</td>
+                        <td th:text="${lapin.cage != null ? lapin.cage.numero : '—'}"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold">Statut</td>
+                        <td>
+                            <span th:class="'badge badge-' + ${lapin.statut.name().toLowerCase()}"
+                                  th:text="${lapin.statut}"></span>
+                        </td>
+                    </tr>
+                    <tr th:if="${lapin.notes}">
+                        <td class="text-muted fw-semibold">Notes</td>
+                        <td class="fst-italic" th:text="${lapin.notes}"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Stats portées -->
+        <div class="col-md-7">
+            <div class="card-rabbitfarm p-4 mb-3">
+                <div class="form-section-title">Statistiques de reproduction</div>
+                <div class="row g-2 text-center">
+                    <div class="col-4">
+                        <div class="portee-mini-box" style="background:#E8F5E9;">
+                            <div class="fw-bold fs-3" style="color:#388E3C;"
+                                 th:text="${lapin.nombrePortees}">0</div>
+                            <div class="small" style="color:#388E3C;">Portées</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="portee-mini-box" style="background:#E3F2FD;">
+                            <div class="fw-bold fs-3" style="color:#1565C0;"
+                                 th:text="${lapin.totalNes}">0</div>
+                            <div class="small" style="color:#1565C0;">Total nés</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="portee-mini-box" style="background:#FFEBEE;">
+                            <div class="fw-bold fs-3" style="color:#C62828;"
+                                 th:text="${lapin.totalDeces}">0</div>
+                            <div class="small" style="color:#C62828;">Total décès</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historique portées -->
+            <div class="card-rabbitfarm p-4">
+                <div class="form-section-title">Historique des portées</div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-rabbitfarm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Nés</th>
+                                <th>Vivants</th>
+                                <th>Décès</th>
+                                <th>Sevrage</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="p : ${lapin.portees}">
+                                <td th:text="${#temporals.format(p.dateMiseBas, 'dd/MM/yy')}"></td>
+                                <td class="fw-bold text-success" th:text="${p.nbNes}"></td>
+                                <td th:text="${p.nbVivants}"></td>
+                                <td class="text-danger" th:text="${p.nbDeces}"></td>
+                                <td th:text="${p.dateSevrage != null ? #temporals.format(p.dateSevrage,'dd/MM/yy') : '—'}"></td>
+                                <td>
+                                    <span th:class="'badge badge-' + ${p.statut.name().toLowerCase()}"
+                                          th:text="${p.statut}"></span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(lapin.portees)}">
+                                <td colspan="6" class="text-center text-muted py-3">Aucune portée</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

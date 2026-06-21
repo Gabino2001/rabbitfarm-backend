@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title th:text="${vente.id != null} ? 'Modifier vente' : 'Nouvelle vente'">Vente</title></head>
+<body>
+<section th:fragment="content" th:with="activePage='ventes'">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a th:href="@{/ventes}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="page-title mb-0"
+            th:text="${vente.id != null} ? '✏️ Modifier vente' : '➕ Enregistrer une vente'"></h1>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card-rabbitfarm p-4">
+                <form th:action="${vente.id != null} ? @{/ventes/{id}/modifier(id=${vente.id})} : @{/ventes/nouveau}"
+                      th:object="${vente}" method="post">
+
+                    <div class="form-section-title">Informations de la vente</div>
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label">Date de vente *</label>
+                            <input type="date" class="form-control" th:field="*{dateVente}"
+                                   th:classappend="${#fields.hasErrors('dateVente')} ? 'is-invalid' : ''"/>
+                            <div class="invalid-feedback" th:errors="*{dateVente}"></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Client *</label>
+                            <input type="text" class="form-control" th:field="*{client}"
+                                   th:classappend="${#fields.hasErrors('client')} ? 'is-invalid' : ''"
+                                   placeholder="Nom du client ou marché"/>
+                            <div class="invalid-feedback" th:errors="*{client}"></div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Type *</label>
+                            <select class="form-select" th:field="*{type}">
+                                <option th:each="t : ${types}" th:value="${t}" th:text="${t}"></option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Nombre de têtes</label>
+                            <input type="number" min="1" class="form-control"
+                                   th:field="*{nombreTetes}" placeholder="Ex: 5"/>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Poids total (kg) *</label>
+                            <input type="number" step="0.1" min="0.1" class="form-control"
+                                   th:field="*{poidsKg}"
+                                   th:classappend="${#fields.hasErrors('poidsKg')} ? 'is-invalid' : ''"/>
+                            <div class="invalid-feedback" th:errors="*{poidsKg}"></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Prix total (FCFA) *</label>
+                            <input type="number" step="0.01" min="0" class="form-control"
+                                   th:field="*{prixTotal}"
+                                   th:classappend="${#fields.hasErrors('prixTotal')} ? 'is-invalid' : ''"
+                                   placeholder="Ex: 45000"/>
+                            <div class="invalid-feedback" th:errors="*{prixTotal}"></div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" th:field="*{notes}" rows="2"
+                                      placeholder="Observations..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a th:href="@{/ventes}" class="btn btn-outline-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-sage">
+                            <i class="bi bi-check-lg me-1"></i>
+                            <span th:text="${vente.id != null} ? 'Enregistrer' : 'Créer'"></span>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

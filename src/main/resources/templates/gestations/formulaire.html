@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title th:text="${gestation.id != null} ? 'Modifier gestation' : 'Nouvelle gestation'">Gestation</title></head>
+<body>
+<section th:fragment="content" th:with="activePage='gestations'">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a th:href="@{/gestations}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="page-title mb-0"
+            th:text="${gestation.id != null} ? '✏️ Modifier gestation' : '🤰 Nouvelle gestation'"></h1>
+    </div>
+
+    <div th:if="${erreur}" class="alert alert-danger">
+        <i class="bi bi-exclamation-circle me-2"></i><span th:text="${erreur}"></span>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card-rabbitfarm p-4">
+
+                <div class="alert alert-info py-2 px-3 mb-4 small">
+                    <i class="bi bi-info-circle me-2"></i>
+                    La date de mise bas prévue est calculée automatiquement
+                    (<strong>saillie + 31 jours</strong>).
+                </div>
+
+                <form th:action="${gestation.id != null} ? @{/gestations/{id}/modifier(id=${gestation.id})} : @{/gestations/nouveau}"
+                      th:object="${gestation}" method="post">
+
+                    <div class="form-section-title">Informations de la saillie</div>
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label">Lapine (femelle) *</label>
+                            <select class="form-select" th:field="*{lapine.id}"
+                                    th:classappend="${#fields.hasErrors('lapine')} ? 'is-invalid' : ''">
+                                <option value="">-- Sélectionner --</option>
+                                <option th:each="l : ${femelles}"
+                                        th:value="${l.id}"
+                                        th:text="${l.nom} + ' (' + ${l.race} + ')'"></option>
+                            </select>
+                            <div class="invalid-feedback" th:errors="*{lapine}"></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Mâle reproducteur</label>
+                            <select class="form-select" th:field="*{male.id}">
+                                <option value="">-- Non renseigné --</option>
+                                <option th:each="m : ${males}"
+                                        th:value="${m.id}"
+                                        th:text="${m.nom} + ' (' + ${m.race} + ')'"></option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Date de saillie *</label>
+                            <input type="date" class="form-control" th:field="*{dateSaillie}"
+                                   th:classappend="${#fields.hasErrors('dateSaillie')} ? 'is-invalid' : ''"/>
+                            <div class="invalid-feedback" th:errors="*{dateSaillie}"></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Date de mise bas prévue</label>
+                            <input type="text" class="form-control bg-light" disabled
+                                   th:value="${gestation.dateMiseBasPrevue != null ? #temporals.format(gestation.dateMiseBasPrevue, 'dd/MM/yyyy') : 'Calculée automatiquement'}"/>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" th:field="*{notes}" rows="3"
+                                      placeholder="Observations..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a th:href="@{/gestations}" class="btn btn-outline-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-sage">
+                            <i class="bi bi-check-lg me-1"></i>
+                            <span th:text="${gestation.id != null} ? 'Enregistrer' : 'Créer'"></span>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

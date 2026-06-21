@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Reproducteurs</title></head>
+<body>
+<section th:fragment="content" th:with="activePage='lapins'">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title mb-0">🐇 Reproducteurs</h1>
+        <a th:href="@{/lapins/nouveau}" class="btn btn-sage">
+            <i class="bi bi-plus-lg me-1"></i> Ajouter un lapin
+        </a>
+    </div>
+
+    <!-- Mini stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-4">
+            <div class="stat-card" style="border-top-color:#1565C0;">
+                <div class="stat-value" th:text="${totalMales}">0</div>
+                <div class="stat-label">Mâles</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="stat-card" style="border-top-color:#7B1FA2;">
+                <div class="stat-value" th:text="${totalFemelles}">0</div>
+                <div class="stat-label">Femelles</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="stat-card" style="border-top-color:#C8A96E;">
+                <div class="stat-value" th:text="${totalEngraissement}">0</div>
+                <div class="stat-label">Engraissement</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card-rabbitfarm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            Liste des lapins
+            <span class="badge bg-secondary" th:text="${#lists.size(lapins)} + ' lapins'"></span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-rabbitfarm mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nom</th>
+                        <th>Race</th>
+                        <th>Sexe</th>
+                        <th>Type</th>
+                        <th>Date naissance</th>
+                        <th>Poids (kg)</th>
+                        <th>Portées</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="lapin : ${lapins}">
+                        <td class="fw-bold" style="color:#C8A96E;" th:text="${lapin.id}"></td>
+                        <td class="fw-semibold" th:text="${lapin.nom}"></td>
+                        <td class="text-muted" th:text="${lapin.race}"></td>
+                        <td>
+                            <span th:if="${lapin.sexe.name() == 'MALE'}" class="badge bg-primary">♂ Mâle</span>
+                            <span th:if="${lapin.sexe.name() == 'FEMELLE'}" class="badge bg-purple" style="background:#7B1FA2;">♀ Femelle</span>
+                        </td>
+                        <td>
+                            <span th:if="${lapin.type.name() == 'REPRODUCTEUR'}" class="badge bg-warning text-dark">Reproducteur</span>
+                            <span th:if="${lapin.type.name() == 'ENGRAISSEMENT'}" class="badge bg-info text-dark">Engraissement</span>
+                        </td>
+                        <td th:text="${#temporals.format(lapin.dateNaissance, 'dd/MM/yyyy')}"></td>
+                        <td th:text="${lapin.poidKg != null ? lapin.poidKg : '—'}"></td>
+                        <td class="fw-bold text-center" th:text="${lapin.nombrePortees}">0</td>
+                        <td>
+                            <span th:class="'badge px-2 py-1 badge-' + ${lapin.statut.name().toLowerCase()}"
+                                  th:text="${lapin.statut}"></span>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a th:href="@{/lapins/{id}(id=${lapin.id})}"
+                                   class="btn btn-sm btn-outline-secondary" title="Détail">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a th:href="@{/lapins/{id}/modifier(id=${lapin.id})}"
+                                   class="btn btn-sm btn-outline-warning" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form th:action="@{/lapins/{id}/supprimer(id=${lapin.id})}"
+                                      method="post" data-confirm="Supprimer ce lapin ?">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(lapins)}">
+                        <td colspan="10" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            Aucun lapin enregistré.
+                            <a th:href="@{/lapins/nouveau}">Ajouter le premier</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>
