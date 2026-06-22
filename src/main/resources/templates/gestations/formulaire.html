@@ -29,7 +29,7 @@
 
                 <form th:action="${gestation.id != null} ? @{/gestations/{id}/modifier(id=${gestation.id})} : @{/gestations/nouveau}"
                       th:object="${gestation}" method="post">
-
+                    <input type="hidden" th:field="*{id}">
                     <div class="form-section-title">Informations de la saillie</div>
                     <div class="row g-3">
 

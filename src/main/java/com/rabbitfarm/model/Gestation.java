@@ -24,7 +24,6 @@ public class Gestation {
     @NotNull(message = "La lapine est obligatoire")
     private Lapin lapine;
 
-    // Mâle reproducteur (optionnel, pour la traçabilité)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "male_id")
     private Lapin male;
@@ -32,47 +31,61 @@ public class Gestation {
     @NotNull(message = "La date de saillie est obligatoire")
     private LocalDate dateSaillie;
 
-    // Calculée automatiquement : dateSaillie + 31 jours
     private LocalDate dateMiseBasPrevue;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private StatutGestation statut = StatutGestation.EN_COURS;
 
-    // Lien vers la portée créée à la mise bas
     @OneToOne(mappedBy = "gestation", fetch = FetchType.LAZY)
     private Portee portee;
 
     private String notes;
 
+
     public enum StatutGestation {
-        EN_COURS,   // gestation en cours
-        MISE_BAS,   // mise bas enregistrée, portée créée
-        ECHEC,      // pas de mise bas (fausse gestation, avortement...)
-        ANNULEE     // saisie erronée
+        EN_COURS,
+        MISE_BAS,
+        ECHEC,
+        ANNULEE
     }
 
-    // Calcule automatiquement la date prévue (31 jours après saillie)
+
     public void calculerDatePrevue() {
         if (dateSaillie != null) {
             this.dateMiseBasPrevue = dateSaillie.plusDays(31);
         }
     }
 
-    // Nombre de jours restants avant mise bas (négatif = en retard)
+
+    @PrePersist
+    @PreUpdate
+    public void avantSauvegarde() {
+        calculerDatePrevue();
+
+        if (statut == null) {
+            statut = StatutGestation.EN_COURS;
+        }
+    }
+
+
     public long getJoursRestants() {
         if (dateMiseBasPrevue == null) return 0;
         return ChronoUnit.DAYS.between(LocalDate.now(), dateMiseBasPrevue);
     }
 
+
     public boolean isEnRetard() {
         return statut == StatutGestation.EN_COURS
-            && dateMiseBasPrevue != null
-            && LocalDate.now().isAfter(dateMiseBasPrevue);
+                && dateMiseBasPrevue != null
+                && LocalDate.now().isAfter(dateMiseBasPrevue);
     }
 
+
     public boolean isProche() {
-        if (statut != StatutGestation.EN_COURS || dateMiseBasPrevue == null) return false;
+        if (statut != StatutGestation.EN_COURS || dateMiseBasPrevue == null)
+            return false;
+
         long jours = getJoursRestants();
         return jours >= 0 && jours <= 3;
     }

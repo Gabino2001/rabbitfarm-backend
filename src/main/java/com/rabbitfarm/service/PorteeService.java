@@ -72,8 +72,12 @@ public class PorteeService {
         Portee saved = porteeRepository.save(portee);
 
         // Si cette portée vient d'une gestation suivie, on la clôture
-        if (portee.getGestation() != null) {
-            gestationService.marquerMiseBas(portee.getGestation());
+        if (portee.getGestation() != null
+                && portee.getGestation().getId() != null) {
+
+            gestationService.marquerMiseBas(
+                    portee.getGestation()
+            );
         }
 
         return saved;

@@ -82,15 +82,35 @@ public class GestationController {
     @PostMapping("/{id}/modifier")
     public String modifier(@PathVariable Long id,
                            @Valid @ModelAttribute Gestation gestation,
-                           BindingResult result, Model model,
+                           BindingResult result,
+                           Model model,
                            RedirectAttributes redirectAttributes) {
+
+
+        gestation.setId(id);
+
+
         if (result.hasErrors()) {
-            model.addAttribute("femelles", lapinService.findFemellesReproductrices());
-            model.addAttribute("males", lapinService.findMalesReproducteurs());
+
+            model.addAttribute("femelles",
+                    lapinService.findFemellesReproductrices());
+
+            model.addAttribute("males",
+                    lapinService.findMalesReproducteurs());
+
             return "gestations/formulaire";
         }
+
+
         gestationService.update(id, gestation);
-        redirectAttributes.addFlashAttribute("succes", "Gestation modifiée !");
+
+
+        redirectAttributes.addFlashAttribute(
+                "succes",
+                "Gestation modifiée !"
+        );
+
+
         return "redirect:/gestations";
     }
 

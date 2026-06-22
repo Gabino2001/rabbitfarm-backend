@@ -2,6 +2,7 @@ package com.rabbitfarm.service;
 
 import com.rabbitfarm.model.*;
 import com.rabbitfarm.repository.GestationRepository;
+import com.rabbitfarm.repository.LapinRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,88 +17,214 @@ import java.util.List;
 public class GestationService {
 
     private final GestationRepository gestationRepository;
+    private final LapinRepository lapinRepository;
 
+
+    // ===========================
+    // LISTE COMPLETE
+    // ===========================
     public List<Gestation> findAll() {
         return gestationRepository.findAll();
     }
 
+
+    // ===========================
+    // RECHERCHE PAR ID
+    // ===========================
     public Gestation findById(Long id) {
         return gestationRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Gestation introuvable : " + id));
+                .orElseThrow(() ->
+                        new EntityNotFoundException(
+                                "Gestation introuvable : " + id
+                        ));
     }
 
+
+    // ===========================
+    // GESTATIONS EN COURS
+    // ===========================
     public List<Gestation> findEnCours() {
         return gestationRepository.findEnCoursOrdered();
     }
 
+
+    // ===========================
+    // GESTATIONS EN RETARD
+    // ===========================
     public List<Gestation> findEnRetard() {
         return gestationRepository.findEnRetard(LocalDate.now());
     }
 
+
+    // ===========================
+    // PROCHES DE LA MISE BAS
+    // ===========================
     public List<Gestation> findProchesDuTerme() {
-        return gestationRepository.findProchesDuTerme(LocalDate.now(), LocalDate.now().plusDays(3));
+        return gestationRepository.findProchesDuTerme(
+                LocalDate.now(),
+                LocalDate.now().plusDays(3)
+        );
     }
 
-    // =====================================================
-    // ENREGISTRER UNE NOUVELLE GESTATION
-    // =====================================================
+
+    // ===========================
+    // CREER UNE GESTATION
+    // ===========================
     public Gestation save(Gestation gestation) {
-        // Empêcher deux gestations en cours pour la même lapine
-        if (gestationRepository.lapineDejaGestante(gestation.getLapine().getId())) {
+
+        if (gestationRepository.lapineDejaGestante(
+                gestation.getLapine().getId())) {
+
             throw new IllegalStateException(
-                "Cette lapine a déjà une gestation en cours. Terminez-la avant d'en créer une nouvelle.");
+                    "Cette lapine a déjà une gestation en cours."
+            );
         }
 
-        // Calcul automatique de la date prévue (saillie + 31 jours)
+
         gestation.calculerDatePrevue();
 
-        // Mettre la lapine en statut GESTANTE
+
         Lapin lapine = gestation.getLapine();
-        lapine.setStatut(Lapin.StatutLapin.GESTANTE);
+        lapine.setStatut(
+                Lapin.StatutLapin.GESTANTE
+        );
+
+
+        if (gestation.getStatut() == null) {
+            gestation.setStatut(
+                    Gestation.StatutGestation.EN_COURS
+            );
+        }
+
 
         return gestationRepository.save(gestation);
     }
 
+
+    // ===========================
+    // MODIFIER UNE GESTATION
+    // ===========================
     public Gestation update(Long id, Gestation gestationData) {
+
         Gestation gestation = findById(id);
-        gestation.setDateSaillie(gestationData.getDateSaillie());
-        gestation.calculerDatePrevue(); // recalcul si la date de saillie change
-        gestation.setMale(gestationData.getMale());
-        gestation.setNotes(gestationData.getNotes());
+
+
+        gestation.setDateSaillie(
+                gestationData.getDateSaillie()
+        );
+
+
+        // Modifier la lapine
+        if (gestationData.getLapine() != null
+                && gestationData.getLapine().getId() != null) {
+
+            Lapin lapine = lapinRepository.findById(
+                    gestationData.getLapine().getId()
+            ).orElseThrow(() ->
+                    new EntityNotFoundException(
+                            "Lapine introuvable"
+                    ));
+
+            gestation.setLapine(lapine);
+        }
+
+
+        // Modifier le mâle
+        if (gestationData.getMale() != null
+                && gestationData.getMale().getId() != null) {
+
+            Lapin male = lapinRepository.findById(
+                    gestationData.getMale().getId()
+            ).orElseThrow(() ->
+                    new EntityNotFoundException(
+                            "Mâle introuvable"
+                    ));
+
+            gestation.setMale(male);
+
+        } else {
+            gestation.setMale(null);
+        }
+
+
+        gestation.setNotes(
+                gestationData.getNotes()
+        );
+
+
+        if (gestation.getStatut() == null) {
+            gestation.setStatut(
+                    Gestation.StatutGestation.EN_COURS
+            );
+        }
+
+
+        gestation.calculerDatePrevue();
+
+
         return gestationRepository.save(gestation);
     }
 
-    // =====================================================
-    // ANNULER / MARQUER ÉCHEC d'une gestation
-    // (fausse gestation, avortement, erreur de saisie)
-    // =====================================================
+
+    // ===========================
+    // MARQUER ECHEC
+    // ===========================
     public Gestation marquerEchec(Long id, String motif) {
-        Gestation gestation = findById(id);
-        gestation.setStatut(Gestation.StatutGestation.ECHEC);
-        gestation.setNotes((gestation.getNotes() != null ? gestation.getNotes() + " | " : "")
-                + "Échec : " + motif);
 
-        // Remettre la lapine en statut actif
-        gestation.getLapine().setStatut(Lapin.StatutLapin.ACTIF);
+        Gestation gestation = findById(id);
+
+        gestation.setStatut(
+                Gestation.StatutGestation.ECHEC
+        );
+
+
+        gestation.setNotes(
+                (gestation.getNotes() != null
+                        ? gestation.getNotes() + " | "
+                        : "")
+                        + "Échec : " + motif
+        );
+
+
+        gestation.getLapine().setStatut(
+                Lapin.StatutLapin.ACTIF
+        );
+
 
         return gestationRepository.save(gestation);
     }
 
+
+    // ===========================
+    // MARQUER MISE BAS
+    // ===========================
+    public void marquerMiseBas(Gestation gestation) {
+
+        Gestation vraieGestation = findById(gestation.getId());
+
+        vraieGestation.setStatut(
+                Gestation.StatutGestation.MISE_BAS
+        );
+
+        gestationRepository.save(vraieGestation);
+    }
+
+
+    // ===========================
+    // SUPPRIMER
+    // ===========================
     public void delete(Long id) {
         gestationRepository.deleteById(id);
     }
 
-    // =====================================================
-    // MARQUER LA GESTATION COMME "MISE_BAS"
-    // (appelé automatiquement quand la portée est créée)
-    // =====================================================
-    public void marquerMiseBas(Gestation gestation) {
-        gestation.setStatut(Gestation.StatutGestation.MISE_BAS);
-        gestationRepository.save(gestation);
-    }
 
-    // Stats
+    // ===========================
+    // STATISTIQUES
+    // ===========================
     public long countEnCours() {
-        return gestationRepository.countByStatut(Gestation.StatutGestation.EN_COURS);
+
+        return gestationRepository.countByStatut(
+                Gestation.StatutGestation.EN_COURS
+        );
     }
 }
