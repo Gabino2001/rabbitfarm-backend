@@ -25,7 +25,6 @@ public class RegistreDTO {
     @NotBlank(message = "La confirmation est obligatoire")
     private String confirmerMotDePasse;
 
-    // Vérifie que les deux mots de passe correspondent
     public boolean motDePasseCorrespond() {
         return motDePasse != null && motDePasse.equals(confirmerMotDePasse);
     }

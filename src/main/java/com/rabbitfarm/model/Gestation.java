@@ -40,16 +40,18 @@ public class Gestation {
     @OneToOne(mappedBy = "gestation", fetch = FetchType.LAZY)
     private Portee portee;
 
+    // ✅ Lien vers le propriétaire
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "utilisateur_id", nullable = false)
+    private Utilisateur utilisateur;
+
     private String notes;
 
-
     public enum StatutGestation {
-        EN_COURS,
-        MISE_BAS,
-        ECHEC,
-        ANNULEE
+        EN_COURS, MISE_BAS, ECHEC, ANNULEE
     }
-
 
     public void calculerDatePrevue() {
         if (dateSaillie != null) {
@@ -57,23 +59,19 @@ public class Gestation {
         }
     }
 
-
     @PrePersist
     @PreUpdate
     public void avantSauvegarde() {
         calculerDatePrevue();
-
         if (statut == null) {
             statut = StatutGestation.EN_COURS;
         }
     }
 
-
     public long getJoursRestants() {
         if (dateMiseBasPrevue == null) return 0;
         return ChronoUnit.DAYS.between(LocalDate.now(), dateMiseBasPrevue);
     }
-
 
     public boolean isEnRetard() {
         return statut == StatutGestation.EN_COURS
@@ -81,11 +79,9 @@ public class Gestation {
                 && LocalDate.now().isAfter(dateMiseBasPrevue);
     }
 
-
     public boolean isProche() {
         if (statut != StatutGestation.EN_COURS || dateMiseBasPrevue == null)
             return false;
-
         long jours = getJoursRestants();
         return jours >= 0 && jours <= 3;
     }

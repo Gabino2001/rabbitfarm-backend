@@ -1,5 +1,6 @@
 package com.rabbitfarm.service;
 
+import com.rabbitfarm.model.Utilisateur;
 import com.rabbitfarm.model.Vente;
 import com.rabbitfarm.repository.VenteRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -16,9 +17,10 @@ import java.util.List;
 public class VenteService {
 
     private final VenteRepository venteRepository;
+    private final UtilisateurContextService utilisateurContextService;
 
     public List<Vente> findAll() {
-        return venteRepository.findAll();
+        return venteRepository.findByUtilisateur(utilisateurContextService.getUtilisateurConnecte());
     }
 
     public Vente findById(Long id) {
@@ -27,6 +29,8 @@ public class VenteService {
     }
 
     public Vente save(Vente vente) {
+        // ✅ On rattache la vente à l'utilisateur connecté
+        vente.setUtilisateur(utilisateurContextService.getUtilisateurConnecte());
         return venteRepository.save(vente);
     }
 
@@ -47,21 +51,24 @@ public class VenteService {
     }
 
     public double getRevenusTotaux() {
-        Double total = venteRepository.sumTotalRevenus();
+        Utilisateur u = utilisateurContextService.getUtilisateurConnecte();
+        Double total = venteRepository.sumTotalRevenus(u);
         return total != null ? total : 0;
     }
 
     public double getRevenusDuMois() {
+        Utilisateur u = utilisateurContextService.getUtilisateurConnecte();
         LocalDate debut = LocalDate.now().withDayOfMonth(1);
         LocalDate fin = LocalDate.now();
-        Double total = venteRepository.sumRevenusEntreDates(debut, fin);
+        Double total = venteRepository.sumRevenusEntreDates(u, debut, fin);
         return total != null ? total : 0;
     }
 
     public double getPoidsDuMois() {
+        Utilisateur u = utilisateurContextService.getUtilisateurConnecte();
         LocalDate debut = LocalDate.now().withDayOfMonth(1);
         LocalDate fin = LocalDate.now();
-        Double total = venteRepository.sumPoidsEntreDates(debut, fin);
+        Double total = venteRepository.sumPoidsEntreDates(u, debut, fin);
         return total != null ? total : 0;
     }
 }

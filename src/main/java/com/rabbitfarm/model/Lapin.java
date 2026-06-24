@@ -44,8 +44,6 @@ public class Lapin {
     @Builder.Default
     private TypeLapin type = TypeLapin.REPRODUCTEUR;
 
-    // CORRECTION : On exclut les proxies des méthodes automatiques de Lombok
-    // pour stopper les crashs de conversion ConversionFailedException et les boucles infinies
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
@@ -56,6 +54,13 @@ public class Lapin {
     @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "lapine", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Portee> portees;
+
+    // ✅ Lien vers le propriétaire
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "utilisateur_id", nullable = false)
+    private Utilisateur utilisateur;
 
     private String notes;
 
@@ -72,7 +77,6 @@ public class Lapin {
         REPRODUCTEUR, ENGRAISSEMENT
     }
 
-    // Méthodes utilitaires
     public int getNombrePortees() {
         return portees != null ? portees.size() : 0;
     }

@@ -1,6 +1,7 @@
 package com.rabbitfarm.service;
 
 import com.rabbitfarm.model.Cage;
+import com.rabbitfarm.model.Utilisateur;
 import com.rabbitfarm.repository.CageRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +16,10 @@ import java.util.List;
 public class CageService {
 
     private final CageRepository cageRepository;
+    private final UtilisateurContextService utilisateurContextService;
 
     public List<Cage> findAll() {
-        return cageRepository.findAll();
+        return cageRepository.findByUtilisateur(utilisateurContextService.getUtilisateurConnecte());
     }
 
     public Cage findById(Long id) {
@@ -26,10 +28,13 @@ public class CageService {
     }
 
     public List<Cage> findLibres() {
-        return cageRepository.findByStatut(Cage.StatutCage.LIBRE);
+        return cageRepository.findByUtilisateurAndStatut(
+                utilisateurContextService.getUtilisateurConnecte(), Cage.StatutCage.LIBRE);
     }
 
     public Cage save(Cage cage) {
+        // ✅ On rattache la cage à l'utilisateur connecté
+        cage.setUtilisateur(utilisateurContextService.getUtilisateurConnecte());
         return cageRepository.save(cage);
     }
 
@@ -48,6 +53,12 @@ public class CageService {
         cageRepository.deleteById(id);
     }
 
-    public long countTotal() { return cageRepository.count(); }
-    public long countLibres() { return cageRepository.countByStatut(Cage.StatutCage.LIBRE); }
+    public long countTotal() {
+        return cageRepository.countByUtilisateur(utilisateurContextService.getUtilisateurConnecte());
+    }
+
+    public long countLibres() {
+        return cageRepository.countByUtilisateurAndStatut(
+                utilisateurContextService.getUtilisateurConnecte(), Cage.StatutCage.LIBRE);
+    }
 }

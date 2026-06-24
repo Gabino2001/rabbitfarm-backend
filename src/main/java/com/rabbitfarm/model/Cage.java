@@ -19,7 +19,7 @@ public class Cage {
     private Long id;
 
     @NotBlank(message = "Le numéro de cage est obligatoire")
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String numero;
 
     @NotNull
@@ -33,16 +33,18 @@ public class Cage {
     @Min(value = 1)
     private Integer capaciteMax;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "cage", fetch = FetchType.LAZY)
     private List<Lapin> lapins;
 
-    // À ajouter dans votre fichier Cage.java :
-    public int getTauxOccupation() {
-        if (capaciteMax == null || capaciteMax == 0) {
-            return 0;
-        }
-        return (getNombreOccupants() * 100) / capaciteMax;
-    }
+    // ✅ Lien vers le propriétaire
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "utilisateur_id", nullable = false)
+    private Utilisateur utilisateur;
+
     private String localisation;
     private String notes;
 
@@ -60,5 +62,10 @@ public class Cage {
 
     public boolean isDisponible() {
         return statut == StatutCage.LIBRE;
+    }
+
+    public int getTauxOccupation() {
+        if (capaciteMax == null || capaciteMax == 0) return 0;
+        return (getNombreOccupants() * 100) / capaciteMax;
     }
 }

@@ -25,7 +25,7 @@ public class Stock {
     private Double quantite;
 
     @NotBlank
-    private String unite; // kg, sac, litre...
+    private String unite;
 
     @NotNull
     @DecimalMin(value = "0.0")
@@ -34,7 +34,13 @@ public class Stock {
     private String fournisseur;
     private String notes;
 
-    // Statut calculé
+    // ✅ Lien vers le propriétaire
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "utilisateur_id", nullable = false)
+    private Utilisateur utilisateur;
+
     public StatutStock getStatut() {
         if (quantite <= 0) return StatutStock.EPUISE;
         if (quantite <= seuilAlerte * 0.5) return StatutStock.CRITIQUE;

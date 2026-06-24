@@ -1,6 +1,7 @@
 package com.rabbitfarm.service;
 
 import com.rabbitfarm.model.Lapin;
+import com.rabbitfarm.model.Utilisateur;
 import com.rabbitfarm.repository.LapinRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +16,10 @@ import java.util.List;
 public class LapinService {
 
     private final LapinRepository lapinRepository;
+    private final UtilisateurContextService utilisateurContextService;
 
     public List<Lapin> findAll() {
-        return lapinRepository.findAll();
+        return lapinRepository.findByUtilisateur(utilisateurContextService.getUtilisateurConnecte());
     }
 
     public Lapin findById(Long id) {
@@ -26,22 +28,30 @@ public class LapinService {
     }
 
     public List<Lapin> findReproducteurs() {
-        return lapinRepository.findByType(Lapin.TypeLapin.REPRODUCTEUR);
+        return lapinRepository.findByUtilisateurAndType(
+                utilisateurContextService.getUtilisateurConnecte(), Lapin.TypeLapin.REPRODUCTEUR);
     }
 
     public List<Lapin> findEngraissement() {
-        return lapinRepository.findByType(Lapin.TypeLapin.ENGRAISSEMENT);
+        return lapinRepository.findByUtilisateurAndType(
+                utilisateurContextService.getUtilisateurConnecte(), Lapin.TypeLapin.ENGRAISSEMENT);
     }
 
     public List<Lapin> findMalesReproducteurs() {
-        return lapinRepository.findBySexeAndType(Lapin.Sexe.MALE, Lapin.TypeLapin.REPRODUCTEUR);
+        return lapinRepository.findByUtilisateurAndSexeAndType(
+                utilisateurContextService.getUtilisateurConnecte(),
+                Lapin.Sexe.MALE, Lapin.TypeLapin.REPRODUCTEUR);
     }
 
     public List<Lapin> findFemellesReproductrices() {
-        return lapinRepository.findBySexeAndType(Lapin.Sexe.FEMELLE, Lapin.TypeLapin.REPRODUCTEUR);
+        return lapinRepository.findByUtilisateurAndSexeAndType(
+                utilisateurContextService.getUtilisateurConnecte(),
+                Lapin.Sexe.FEMELLE, Lapin.TypeLapin.REPRODUCTEUR);
     }
 
     public Lapin save(Lapin lapin) {
+        // ✅ On rattache le lapin à l'utilisateur connecté
+        lapin.setUtilisateur(utilisateurContextService.getUtilisateurConnecte());
         return lapinRepository.save(lapin);
     }
 
@@ -64,18 +74,19 @@ public class LapinService {
 
     // Stats
     public long countTotal() {
-        return lapinRepository.count();
+        return lapinRepository.countByUtilisateur(utilisateurContextService.getUtilisateurConnecte());
     }
 
     public long countMalesReproducteurs() {
-        return lapinRepository.countMalesReproducteurs();
+        return lapinRepository.countMalesReproducteurs(utilisateurContextService.getUtilisateurConnecte());
     }
 
     public long countFemellesReproductrices() {
-        return lapinRepository.countFemellesReproductrices();
+        return lapinRepository.countFemellesReproductrices(utilisateurContextService.getUtilisateurConnecte());
     }
 
     public long countEngraissement() {
-        return lapinRepository.countByType(Lapin.TypeLapin.ENGRAISSEMENT);
+        return lapinRepository.countByUtilisateurAndType(
+                utilisateurContextService.getUtilisateurConnecte(), Lapin.TypeLapin.ENGRAISSEMENT);
     }
 }

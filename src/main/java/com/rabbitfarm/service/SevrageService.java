@@ -21,20 +21,16 @@ public class SevrageService {
     private final PorteeRepository porteeRepository;
     private final LotEngraissementRepository lotRepository;
     private final CageRepository cageRepository;
+    private final UtilisateurContextService utilisateurContextService;
 
-    // =====================================================
-    // SEVRAGE MANUEL — déclenché par le bouton "Sevrer"
-    // =====================================================
     public LotEngraissement sevrerPortee(Long porteeId) {
         Portee portee = porteeRepository.findById(porteeId)
                 .orElseThrow(() -> new EntityNotFoundException("Portée introuvable : " + porteeId));
 
-        // Vérifier qu'elle n'est pas déjà sevrée
         if (portee.isSevree()) {
             throw new IllegalStateException("Cette portée a déjà été sevrée.");
         }
 
-        // Vérifier qu'il y a des lapereaux vivants
         if (portee.getNbVivants() == null || portee.getNbVivants() <= 0) {
             throw new IllegalStateException("Aucun lapereau vivant à sevrer dans cette portée.");
         }
@@ -42,17 +38,10 @@ public class SevrageService {
         return creerLotDepuisPortee(portee, LocalDate.now());
     }
 
-    // =====================================================
-    // SEVRAGE AUTOMATIQUE — lancé chaque nuit à minuit
-    // Vérifie toutes les portées dont la date de sevrage
-    // est passée et qui ne sont pas encore sevrées
-    // =====================================================
-    @Scheduled(cron = "0 0 0 * * *")  // Tous les jours à minuit
+    @Scheduled(cron = "0 0 0 * * *")
     public void sevrageAutomatique() {
-        LocalDate aujourd_hui = LocalDate.now();
-
-        List<Portee> aSetablirPortees = porteeRepository
-                .findPorteesASeurer(aujourd_hui);
+        LocalDate aujourdHui = LocalDate.now();
+        List<Portee> aSetablirPortees = porteeRepository.findPorteesASeurer(aujourdHui);
 
         if (aSetablirPortees.isEmpty()) {
             log.info("Sevrage automatique : aucune portée à sevrer aujourd'hui.");
@@ -61,7 +50,7 @@ public class SevrageService {
 
         for (Portee portee : aSetablirPortees) {
             try {
-                creerLotDepuisPortee(portee, aujourd_hui);
+                creerLotDepuisPortee(portee, aujourdHui);
                 log.info("Sevrage automatique effectué pour portée #{} (lapine: {})",
                         portee.getId(), portee.getLapine().getNom());
             } catch (Exception e) {
@@ -70,17 +59,14 @@ public class SevrageService {
         }
     }
 
-    // =====================================================
-    // LOGIQUE COMMUNE : crée le lot d'engraissement
-    // =====================================================
     private LotEngraissement creerLotDepuisPortee(Portee portee, LocalDate dateSevrage) {
         int nbLapereaux = portee.getNbVivants();
 
-        // Chercher une cage d'engraissement libre
-        Cage cage = cageRepository.findFirstByTypeAndStatut(
-                Cage.TypeCage.ENGRAISSEMENT, Cage.StatutCage.LIBRE).orElse(null);
+        // ✅ Chercher une cage libre appartenant au même utilisateur que la portée
+        Utilisateur proprietaire = portee.getUtilisateur();
+        Cage cage = cageRepository.findFirstByUtilisateurAndTypeAndStatut(
+                proprietaire, Cage.TypeCage.ENGRAISSEMENT, Cage.StatutCage.LIBRE).orElse(null);
 
-        // Créer le lot d'engraissement
         LotEngraissement lot = LotEngraissement.builder()
                 .portee(portee)
                 .cage(cage)
@@ -89,31 +75,27 @@ public class SevrageService {
                 .nombreDeces(0)
                 .dateEntree(dateSevrage)
                 .statut(LotEngraissement.StatutLot.EN_COURS)
+                // ✅ Le lot appartient au même utilisateur que la portée
+                .utilisateur(proprietaire)
                 .notes("Créé automatiquement au sevrage de la portée #" + portee.getId())
                 .build();
 
         lotRepository.save(lot);
 
-        // Mettre à jour la cage si trouvée
         if (cage != null) {
             cage.setStatut(Cage.StatutCage.OCCUPEE);
             cageRepository.save(cage);
         }
 
-        // Marquer la portée comme sevrée
         portee.setSevree(true);
         portee.setStatut(Portee.StatutPortee.SEVREE);
         porteeRepository.save(portee);
 
-        log.info("Lot d'engraissement créé : {} lapereaux depuis portée #{}",
-                nbLapereaux, portee.getId());
+        log.info("Lot d'engraissement créé : {} lapereaux depuis portée #{}", nbLapereaux, portee.getId());
 
         return lot;
     }
 
-    // =====================================================
-    // ENREGISTRER UN DÉCÈS dans un lot
-    // =====================================================
     public LotEngraissement enregistrerDeces(Long lotId, int nombreDeces) {
         LotEngraissement lot = lotRepository.findById(lotId)
                 .orElseThrow(() -> new EntityNotFoundException("Lot introuvable : " + lotId));
@@ -132,9 +114,6 @@ public class SevrageService {
         return lotRepository.save(lot);
     }
 
-    // =====================================================
-    // CLÔTURER un lot (vendu ou terminé)
-    // =====================================================
     public LotEngraissement cloturerLot(Long lotId, LotEngraissement.StatutLot statut) {
         LotEngraissement lot = lotRepository.findById(lotId)
                 .orElseThrow(() -> new EntityNotFoundException("Lot introuvable : " + lotId));
@@ -142,7 +121,6 @@ public class SevrageService {
         lot.setStatut(statut);
         lot.setDateSortie(LocalDate.now());
 
-        // Libérer la cage
         if (lot.getCage() != null) {
             lot.getCage().setStatut(Cage.StatutCage.LIBRE);
             cageRepository.save(lot.getCage());
@@ -151,28 +129,20 @@ public class SevrageService {
         return lotRepository.save(lot);
     }
 
-    // =====================================================
-    // STATS
-    // =====================================================
     public int getTotalLapereauEnEngraissement() {
-        Integer total = lotRepository.sumLapereauEnCours();
+        Integer total = lotRepository.sumLapereauEnCours(utilisateurContextService.getUtilisateurConnecte());
         return total != null ? total : 0;
     }
 
     public List<LotEngraissement> getLotsEnCours() {
-        return lotRepository.findByStatut(LotEngraissement.StatutLot.EN_COURS);
+        return lotRepository.findByUtilisateurAndStatut(
+                utilisateurContextService.getUtilisateurConnecte(), LotEngraissement.StatutLot.EN_COURS);
     }
 
     public List<LotEngraissement> getTousLesLots() {
-        return lotRepository.findAll();
+        return lotRepository.findByUtilisateur(utilisateurContextService.getUtilisateurConnecte());
     }
 
-    // AJOUTER CETTE MÉTHODE dans SevrageService.java
-
-    // =====================================================
-// AJOUTER DES LAPEREAUX à un lot existant
-// (transfert, achat, erreur de saisie...)
-// =====================================================
     public LotEngraissement ajouterLapereaux(Long lotId, int nombre, String motif) {
         LotEngraissement lot = lotRepository.findById(lotId)
                 .orElseThrow(() -> new EntityNotFoundException("Lot introuvable : " + lotId));
@@ -191,19 +161,16 @@ public class SevrageService {
                 ? lot.getNotes() + " | " + noteAjout
                 : noteAjout);
 
-        log.info("Ajout de {} lapereaux au lot #{}", nombre, lotId);
         return lotRepository.save(lot);
     }
 
-    // =====================================================
-// CRÉER UN LOT MANUELLEMENT (sans portée)
-// Pour les lapereaux achetés à l'extérieur par exemple
-// =====================================================
     public LotEngraissement creerLotManuel(int nombreLapereaux, Long cageId, String notes) {
+        Utilisateur u = utilisateurContextService.getUtilisateurConnecte();
+
         Cage cage = cageId != null
                 ? cageRepository.findById(cageId).orElse(null)
-                : cageRepository.findFirstByTypeAndStatut(
-                Cage.TypeCage.ENGRAISSEMENT, Cage.StatutCage.LIBRE).orElse(null);
+                : cageRepository.findFirstByUtilisateurAndTypeAndStatut(
+                        u, Cage.TypeCage.ENGRAISSEMENT, Cage.StatutCage.LIBRE).orElse(null);
 
         LotEngraissement lot = LotEngraissement.builder()
                 .portee(null)
@@ -213,6 +180,8 @@ public class SevrageService {
                 .nombreDeces(0)
                 .dateEntree(LocalDate.now())
                 .statut(LotEngraissement.StatutLot.EN_COURS)
+                // ✅ Le lot appartient à l'utilisateur connecté
+                .utilisateur(u)
                 .notes(notes != null ? notes : "Lot créé manuellement")
                 .build();
 
@@ -223,5 +192,4 @@ public class SevrageService {
 
         return lotRepository.save(lot);
     }
-
 }

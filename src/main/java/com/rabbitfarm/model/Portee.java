@@ -40,30 +40,29 @@ public class Portee {
     private Integer nbDeces = 0;
 
     private LocalDate dateSevrage;
-
-    // Nombre de lapereaux effectivement sevrés (peut différer de nbVivants
-    // si décès supplémentaires entre naissance et sevrage)
     private Integer nbrSevres;
-
-    // Poids moyen au sevrage (kg), saisi manuellement ou estimé
     private Double poidsMoyenSevrage;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private StatutPortee statut = StatutPortee.EN_COURS;
 
-    // Indique si le sevrage a déjà été effectué (lot engraissement créé)
     @Builder.Default
     private boolean sevree = false;
 
-    // Lien vers le lot d'engraissement créé automatiquement au sevrage
     @OneToOne(mappedBy = "portee", fetch = FetchType.LAZY)
     private LotEngraissement lotEngraissement;
 
-    // Lien vers la gestation d'origine (null si portée saisie directement)
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gestation_id", unique = true)
     private Gestation gestation;
+
+    // ✅ Lien vers le propriétaire
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "utilisateur_id", nullable = false)
+    private Utilisateur utilisateur;
 
     private String notes;
 
@@ -71,19 +70,15 @@ public class Portee {
         EN_COURS, SEVREE, TERMINEE
     }
 
-    // Getter manuel explicite (Lombok @Data en génère un équivalent,
-    // gardé ici pour la clarté / au cas où l'IDE traîne à rafraîchir)
     public boolean isSevree() {
         return this.sevree;
     }
 
-    // Taux de survie à la naissance
     public double getTauxSurvie() {
         if (nbNes == null || nbNes == 0) return 0;
         return ((double) (nbNes - nbDeces) / nbNes) * 100;
     }
 
-    // Taux de réussite du sevrage (sevrés / vivants à la naissance)
     public double getTauxReussiteSevrage() {
         if (nbVivants == null || nbVivants == 0 || nbrSevres == null) return 0;
         return ((double) nbrSevres / nbVivants) * 100;

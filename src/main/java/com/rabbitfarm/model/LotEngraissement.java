@@ -17,7 +17,6 @@ public class LotEngraissement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Portée d'origine (liaison automatique au sevrage)
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "portee_id", unique = true)
     private Portee portee;
@@ -26,22 +25,25 @@ public class LotEngraissement {
     @JoinColumn(name = "cage_id")
     private Cage cage;
 
-    // Nombre de lapereaux au départ du lot
     private Integer nombreInitial;
-
-    // Nombre actuel (diminue si décès en engraissement)
     private Integer nombreActuel;
 
-    // Décès pendant l'engraissement
     @Builder.Default
     private Integer nombreDeces = 0;
 
-    private LocalDate dateEntree;  // = date de sevrage
-    private LocalDate dateSortie;  // abattage ou vente
+    private LocalDate dateEntree;
+    private LocalDate dateSortie;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private StatutLot statut = StatutLot.EN_COURS;
+
+    // ✅ Lien vers le propriétaire
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "utilisateur_id", nullable = false)
+    private Utilisateur utilisateur;
 
     private String notes;
 
@@ -49,7 +51,6 @@ public class LotEngraissement {
         EN_COURS, VENDU, TERMINE
     }
 
-    // Nom affiché automatiquement
     public String getNom() {
         if (portee != null && portee.getLapine() != null) {
             return "Lot " + portee.getLapine().getNom()
@@ -58,7 +59,6 @@ public class LotEngraissement {
         return "Lot #" + id;
     }
 
-    // Poids estimé total (basé sur un poids moyen de 2 kg/lapereau)
     public double getPoidsEstimeKg() {
         return nombreActuel != null ? nombreActuel * 2.0 : 0;
     }

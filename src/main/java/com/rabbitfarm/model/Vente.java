@@ -39,13 +39,19 @@ public class Vente {
     @Min(value = 1)
     private Integer nombreTetes;
 
+    // ✅ Lien vers le propriétaire
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "utilisateur_id", nullable = false)
+    private Utilisateur utilisateur;
+
     private String notes;
 
     public enum TypeVente {
         VIANDE, REPRODUCTEUR, LAPEREAU
     }
 
-    // Prix par kg
     public Double getPrixParKg() {
         if (poidsKg == null || poidsKg == 0) return 0.0;
         return prixTotal / poidsKg;

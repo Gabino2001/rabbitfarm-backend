@@ -1,6 +1,7 @@
 package com.rabbitfarm.service;
 
 import com.rabbitfarm.model.Stock;
+import com.rabbitfarm.model.Utilisateur;
 import com.rabbitfarm.repository.StockRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +16,10 @@ import java.util.List;
 public class StockService {
 
     private final StockRepository stockRepository;
+    private final UtilisateurContextService utilisateurContextService;
 
     public List<Stock> findAll() {
-        return stockRepository.findAll();
+        return stockRepository.findByUtilisateur(utilisateurContextService.getUtilisateurConnecte());
     }
 
     public Stock findById(Long id) {
@@ -26,14 +28,16 @@ public class StockService {
     }
 
     public List<Stock> findStocksBas() {
-        return stockRepository.findStocksBas();
+        return stockRepository.findStocksBas(utilisateurContextService.getUtilisateurConnecte());
     }
 
     public List<Stock> findStocksCritiques() {
-        return stockRepository.findStocksCritiques();
+        return stockRepository.findStocksCritiques(utilisateurContextService.getUtilisateurConnecte());
     }
 
     public Stock save(Stock stock) {
+        // ✅ On rattache le stock à l'utilisateur connecté
+        stock.setUtilisateur(utilisateurContextService.getUtilisateurConnecte());
         return stockRepository.save(stock);
     }
 

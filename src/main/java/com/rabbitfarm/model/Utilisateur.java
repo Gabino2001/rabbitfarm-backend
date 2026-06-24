@@ -55,6 +55,6 @@ public class Utilisateur {
 
     public String getInitiales() {
         return String.valueOf(prenom.charAt(0)).toUpperCase()
-             + String.valueOf(nom.charAt(0)).toUpperCase();
+                + String.valueOf(nom.charAt(0)).toUpperCase();
     }
 }

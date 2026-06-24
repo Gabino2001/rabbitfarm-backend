@@ -1,7 +1,7 @@
 package com.rabbitfarm.service;
 
-import com.rabbitfarm.model.Portee;
 import com.rabbitfarm.model.Gestation;
+import com.rabbitfarm.model.Portee;
 import com.rabbitfarm.repository.PorteeRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +17,12 @@ import java.util.List;
 public class PorteeService {
 
     private final PorteeRepository porteeRepository;
-    private final GestationService gestationService; // lien avec le suivi de gestation
-    private final SevrageService sevrageService;      // lien avec le sevrage groupé (Lot)
+    private final GestationService gestationService;
+    private final SevrageService sevrageService;
+    private final UtilisateurContextService utilisateurContextService;
 
     public List<Portee> findAll() {
-        return porteeRepository.findAll();
+        return porteeRepository.findByUtilisateur(utilisateurContextService.getUtilisateurConnecte());
     }
 
     public Portee findById(Long id) {
@@ -34,13 +35,10 @@ public class PorteeService {
     }
 
     public List<Portee> findEnCours() {
-        return porteeRepository.findByStatut(Portee.StatutPortee.EN_COURS);
+        return porteeRepository.findByUtilisateurAndStatut(
+                utilisateurContextService.getUtilisateurConnecte(), Portee.StatutPortee.EN_COURS);
     }
 
-    // =====================================================
-    // PRÉ-REMPLIR une portée à partir d'une gestation
-    // (utilisé par le bouton "Enregistrer mise bas")
-    // =====================================================
     public Portee preparerDepuisGestation(Long gestationId) {
         Gestation gestation = gestationService.findById(gestationId);
 
@@ -58,10 +56,6 @@ public class PorteeService {
         return portee;
     }
 
-    // =====================================================
-    // CRÉATION d'une portée — gère aussi la clôture
-    // de la gestation liée si elle existe
-    // =====================================================
     public Portee save(Portee portee) {
         portee.setNbVivants(portee.getNbNes() - portee.getNbDeces());
 
@@ -69,15 +63,13 @@ public class PorteeService {
             portee.setDateSevrage(portee.getDateMiseBas().plusDays(45));
         }
 
+        // ✅ On rattache la portée à l'utilisateur connecté
+        portee.setUtilisateur(utilisateurContextService.getUtilisateurConnecte());
+
         Portee saved = porteeRepository.save(portee);
 
-        // Si cette portée vient d'une gestation suivie, on la clôture
-        if (portee.getGestation() != null
-                && portee.getGestation().getId() != null) {
-
-            gestationService.marquerMiseBas(
-                    portee.getGestation()
-            );
+        if (portee.getGestation() != null && portee.getGestation().getId() != null) {
+            gestationService.marquerMiseBas(portee.getGestation());
         }
 
         return saved;
@@ -98,41 +90,32 @@ public class PorteeService {
         porteeRepository.deleteById(id);
     }
 
-    // =====================================================
-    // SEVRAGE — approche A : LOT GROUPÉ
-    // Délègue entièrement à SevrageService, qui crée
-    // UNE ligne LotEngraissement (pas un Lapin par lapereau).
-    // Conservé ici comme point d'entrée pratique depuis
-    // l'écran "Portées".
-    // =====================================================
     public Portee sevrerPortee(Long porteeId) {
-        // SevrageService.sevrerPortee() :
-        //  - crée le LotEngraissement (nombreInitial = nbVivants)
-        //  - assigne une cage d'engraissement libre si dispo
-        //  - marque portee.sevree = true et statut = SEVREE
         sevrageService.sevrerPortee(porteeId);
         return findById(porteeId);
     }
 
-    // Stats du mois en cours
     public int getNesduMois() {
         LocalDate debut = LocalDate.now().withDayOfMonth(1);
         LocalDate fin = LocalDate.now();
-        Integer total = porteeRepository.sumNesEntreDates(debut, fin);
+        Integer total = porteeRepository.sumNesEntreDates(
+                utilisateurContextService.getUtilisateurConnecte(), debut, fin);
         return total != null ? total : 0;
     }
 
     public List<Portee> getSevragesAVenir() {
-        return porteeRepository.findSevragesAFaire(LocalDate.now().plusDays(7));
+        return porteeRepository.findSevragesAFaire(
+                utilisateurContextService.getUtilisateurConnecte(),
+                LocalDate.now().plusDays(7));
     }
 
     public int getTotalNes() {
-        Integer total = porteeRepository.sumTotalNes();
+        Integer total = porteeRepository.sumTotalNes(utilisateurContextService.getUtilisateurConnecte());
         return total != null ? total : 0;
     }
 
     public int getTotalDeces() {
-        Integer total = porteeRepository.sumTotalDeces();
+        Integer total = porteeRepository.sumTotalDeces(utilisateurContextService.getUtilisateurConnecte());
         return total != null ? total : 0;
     }
 }

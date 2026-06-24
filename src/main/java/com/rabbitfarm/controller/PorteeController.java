@@ -1,7 +1,7 @@
 package com.rabbitfarm.controller;
 
-import com.rabbitfarm.model.Portee;
 import com.rabbitfarm.model.Lapin;
+import com.rabbitfarm.model.Portee;
 import com.rabbitfarm.service.LapinService;
 import com.rabbitfarm.service.PorteeService;
 import jakarta.validation.Valid;
